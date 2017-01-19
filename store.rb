@@ -94,3 +94,21 @@ jon = User.create(first_name: 'Jon', last_name: 'Black', email: 'jblack@gmail.co
 jons_order = Order.create(item_id: 2, user_id: 51, quantity: 4, created_at: 'CURRENT_TIMPESTAMP')
 puts "Answer: #{jon.first_name}, #{jon.last_name}, #{jon.email}"
 puts "#{jons_order.id}, #{jons_order.user_id}, #{jons_order.item_id}, #{jons_order.quantity}, #{jons_order.created_at}"
+
+puts "Question: What item was ordered most often? Grossed the most money?"
+
+print "Ordered Most: "
+most_purchased_items = Order.joins(:item)
+most_purchased_items.group(:item_id)
+most_purchased = most_purchased_items.order(:quantity).last(1)
+most_purchased.each do |mp|
+  puts Item.find(mp.item_id).title
+end
+
+print "Grossed the most: "
+item_which_grossed_most = Order.joins(:item)
+item_which_grossed_most.group(:item_id)
+grossed_most = item_which_grossed_most.order("price * quantity").last(1)
+grossed_most.each do |gm|
+  puts Item.find(gm.item_id).title
+end
