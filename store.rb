@@ -14,7 +14,7 @@ class User < ActiveRecord::Base
 end
 
 class Item < ActiveRecord::Base
-
+  has_many :orders
 end
 
 class Order < ActiveRecord::Base
@@ -29,7 +29,7 @@ end
 
 
 
-# How much was spent on books?
+
 # Simulate buying an item by inserting a User for yourself and an Order for that User.
 
 
@@ -84,3 +84,14 @@ puts tools2.sum('price')
 puts "Question: How many total items did we sell?"
 total_items = Order.sum('quantity')
 puts "Answer: #{total_items}"
+
+"Question: How much was spent on books?"
+all_book_orders = Item.joins(:orders).where("category = 'Books'").sum("price * quantity")
+puts all_book_orders
+
+"Question: Simulate buying an item by inserting a User for yourself and an Order for that User."
+User.create(first_name: 'Jon', last_name: 'Black', email: 'jblack@gmail.com')
+
+
+
+sally = Actor.create(name: "Sally Fields", salary: 30000)
