@@ -90,8 +90,7 @@ all_book_orders = Item.joins(:orders).where("category = 'Books'").sum("price * q
 puts all_book_orders
 
 "Question: Simulate buying an item by inserting a User for yourself and an Order for that User."
-User.create(first_name: 'Jon', last_name: 'Black', email: 'jblack@gmail.com')
-
-
-
-sally = Actor.create(name: "Sally Fields", salary: 30000)
+jon = User.create(first_name: 'Jon', last_name: 'Black', email: 'jblack@gmail.com')
+jons_order = Order.create(item_id: 2, user_id: 51, quantity: 4, created_at: 'CURRENT_TIMPESTAMP')
+puts "Answer: #{jon.first_name}, #{jon.last_name}, #{jon.email}"
+puts "#{jons_order.id}, #{jons_order.user_id}, #{jons_order.item_id}, #{jons_order.quantity}, #{jons_order.created_at}"
