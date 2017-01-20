@@ -41,38 +41,49 @@ print "\n"
 puts "Question: What are the 5 most expensive items?"
 
 print "Answer: "
- items = Item.order(price: :desc).first(5)
+ items = Item.order(price: :desc).limit(5)
   items.each do |item|
     puts item.title
   end
 # also works
 # puts Item.order(price: :desc).limit(5).pluck(:title)
+# => returns an array of the fields 'plucked'
 
 print "\n"
 puts "Question: What's the cheapest book?"
-item =  Item.where(category: "Books").order(:price).limit(1)
-puts "Answer: #{item.pluck(:title)}"
+item =  Item.where(category: "Books").order(:price).first
+# puts "Answer: #{item.pluck(:title)}"
+puts "Answer: #{item.title}"
+
 
 print "\n"
 puts "Question  Who lives at '6439 Zetta Hills, Willmouth, WY'? Do they have another address?"
-address = Address.where(street: '6439 Zetta Hills', city: 'Willmouth', state: 'WY')
 
-"Answer: "
-user = User.find(address.pluck(:user_id)).first(1)
-user.each do |u|
-  puts "#{u.first_name} #{u.last_name}"
-end
+person = Address.find_by(
+    street: '6439 Zetta Hills',
+    city: 'Willmouth',
+    state: 'WY'
+).user
+puts "#{person.first_name}, #{person.last_name}"
 
-addresses = Address.first(2).count
-puts addresses
+# address = Address.where(street: '6439 Zetta Hills', city: 'Willmouth', state: 'WY')
+#
+# "Answer: "
+# user = User.find(address.pluck(:user_id)).first(1)
+# user.each do |u|
+#   puts "#{u.first_name} #{u.last_name}"
+# end
+#
+# addresses = Address.first(2).count
+# puts addresses
 
 print "\n"
 puts "Question: Correct Virginie Mitchell's address to 'New York, NY, 10108.'"
 puts "Answer: "
 user = User.find_by(first_name: 'Virginie', last_name: 'Mitchell')
-user_id = user.id
-address = Address.where(user_id: user_id).first
-address.update(city: 'New York', state: 'NY', zip: '10108')
+user.addresses.update_all(city: 'New York', state: 'NY', zip: '10108')
+address = Address.where(user_id: user.id).first
+# address.update(city: 'New York', state: 'NY', zip: '10108')
 puts "#{address.city}, #{address.state}, #{address.zip}"
 
 print "\n"
@@ -94,8 +105,11 @@ puts "Answer: #{total_items}"
 
 print "\n"
 puts "Question: How much was spent on books?"
-all_book_orders = Item.joins(:orders).where("category = 'Books'").sum("price * quantity")
-puts all_book_orders
+all_book_orders = Item.joins(:orders).where(category: 'Books').sum("price * quantity")
+all_book_orders_inclusive = Item.joins(:orders).where('category LIKE "%Book%"').sum("price * quantity")
+
+puts "exclusive: #{all_book_orders}"
+puts "inclusive: #{all_book_orders_inclusive}"
 
 print "\n"
 "Question: Simulate buying an item by inserting a User for yourself and an Order for that User."
@@ -108,14 +122,18 @@ print "\n"
 puts "Question: What item was ordered most often? Grossed the most money?"
 
 print "Ordered Most: "
-most_purchased_items = Order.joins(:item)
-most_purchased_items.group(:item_id)
-most_purchased = most_purchased_items.order(:quantity).last(1)
-most_purchased.each do |mp|
-  puts Item.find(mp.item_id).title
-end
+often = Order.group(:item).sum(:quantity).max_by{|key, value| value}
+puts "#{often.first.title} was ordered #{often.last} times"
+# most_purchased_items = Order.joins(:item)
+# most_purchased_items.group(:item_id)
+# most_purchased = most_purchased_items.order(:quantity).last(1)
+# most_purchased.each do |mp|
+#   puts Item.find(mp.item_id).title
+# end
 
 print "Grossed the most: "
+# most = Order.joins(:item).group(:item).sum('price * quantity').max_by{|key, value| value}
+# print "#{most.keys.}"
 item_which_grossed_most = Order.joins(:item)
 item_which_grossed_most.group(:item_id)
 grossed_most = item_which_grossed_most.order("price * quantity").last(1)
@@ -124,5 +142,13 @@ grossed_most.each do |gm|
 end
 print "\n"
 puts "Question: What user spent the most?"
-print User.joins(:orders, :items).group('orders.user_id').order('orders.quantity * items.price DESC').limit(1).pluck(:first_name, :last_name)
+# print User.joins(:orders, :items).group('orders.user_id').order('orders.quantity * items.price DESC').limit(1).pluck(:first_name, :last_name)
+#  ^^ not correct
+user = User.joins(orders: :item).select('users.*, SUM(price * quantity) AS total').order("total DESC").group(:id).first
+puts "Answer: #{user.first_name}, #{user.last_name} spent the most: #{user.total}"
 
+
+categories = Item.joins(:orders).group(:category).order("sum_price_all_quantity DESC").limit(3).sum('price * quantity')
+categories.each do |cat, rev|
+  puts "#{cat} |  #{rev}"
+end
