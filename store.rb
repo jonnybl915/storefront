@@ -10,6 +10,7 @@ ActiveRecord::Base.establish_connection(
 class User < ActiveRecord::Base
   has_many :addresses
   has_many :orders
+  has_many :items, through: :orders
 
 end
 
@@ -114,7 +115,7 @@ grossed_most.each do |gm|
 end
 
 puts "Question: What user spent the most?"
-print User.joins(:orders).group(:user_id).order('orders.quantity DESC').limit(1).pluck(:first_name, :last_name)
+print User.joins(:orders, :items).group('orders.user_id').order('orders.quantity * items.price DESC').limit(1).pluck(:first_name, :last_name)
 
 
 
