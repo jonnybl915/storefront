@@ -112,3 +112,9 @@ grossed_most = item_which_grossed_most.order("price * quantity").last(1)
 grossed_most.each do |gm|
   puts Item.find(gm.item_id).title
 end
+
+puts "Question: What user spent the most?"
+print User.joins(:orders).group(:user_id).order('orders.quantity DESC').limit(1).pluck(:first_name, :last_name)
+
+
+
